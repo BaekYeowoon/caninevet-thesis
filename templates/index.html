@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐕 CanineVet - AI Dog Posture Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .drag-active { border-color: #10b981 !important; background-color: #d1fae5 !important; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 min-h-screen">
+
+<div id="mainPage" class="max-w-6xl mx-auto px-6 py-16 page-content animate-fade-in">
+    <!-- 🔥 HERO SECTION -->
+    <section class="text-center mb-20">
+        <div class="inline-block animate-float mb-8">
+            <div class="w-28 h-28 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-3xl backdrop-blur-sm border border-emerald-200/50 mx-auto mb-6 flex items-center justify-center">
+                <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+            </div>
+        </div>
+        <h2 class="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-600 bg-clip-text text-transparent mb-6 leading-tight">
+            Canine<br>Musculoskeletal Assessment
+        </h2>
+        <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Upload your dog's photo and get instant hip, elbow, and joint health analysis powered by <strong>YOLOv11 pose estimation</strong>.
+        </p>
+        
+        <!-- 🔥 UPLOAD ZONE -->
+        <div class="max-w-2xl mx-auto">
+            <!-- IMAGE PREVIEW ZONE -->
+            <div id="uploadZone" class="group relative border-4 border-dashed border-emerald-300/50 bg-gradient-to-br from-emerald-50/80 to-teal-50/80 rounded-3xl p-12 hover:border-emerald-400 hover:bg-emerald-50/90 transition-all duration-500 backdrop-blur-sm shadow-2xl hover:shadow-3xl cursor-pointer mb-8">
+                <input id="imageInput" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                
+                <div id="uploadPreview" class="hidden absolute inset-0 w-full h-full rounded-3xl overflow-hidden z-10">
+                    <img id="previewImg" class="w-full h-full object-contain" alt="Preview">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-3xl"></div>
+                    <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                        <span id="fileName" class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-sm font-semibold text-slate-800 truncate max-w-[200px]"></span>
+                        <button id="changeImage" class="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-xl font-semibold text-emerald-600 hover:bg-white hover:shadow-lg transition-all">
+                            <i class="fas fa-exchange-alt mr-1"></i>Change
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DEFAULT UPLOAD STATE -->
+                <div id="uploadDefault" class="flex flex-col items-center text-center">
+                    <svg class="w-24 h-24 text-emerald-500/80 group-hover:scale-110 transition-transform duration-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">📸 Drop your dog's photo</h3>
+                    <p class="text-lg text-slate-600 mb-4 max-w-sm leading-relaxed">
+                        Click or drag high-quality side-profile photo (JPG/PNG)
+                    </p>
+                    <div class="flex flex-wrap gap-2 text-sm text-emerald-600 font-medium justify-center">
+                        <span class="flex items-center"><i class="fas fa-check mr-1"></i>Side profile</span>
+                        <span class="flex items-center"><i class="fas fa-check mr-1"></i>Joints visible</span>
+                        <span class="flex items-center"><i class="fas fa-check mr-1"></i>Good lighting</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔥 ANALYZE BUTTON -->
+            <button id="analyzeBtn" class="w-full sm:w-auto px-12 py-6 bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xl rounded-3xl shadow-2xl hover:shadow-3xl hover:-translate-y-2 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-lg transform mx-auto block mb-4" disabled>
+                🐕 <span id="analyzeText">Analyze Posture</span>
+            </button>
+
+            <!-- 🔥 TRAIN BUTTON -->
+            <button id="trainBtn" class="px-12 py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 animate-pulse-slow">
+                🚀 Train Model (30min)
+            </button>
+        </div>
+    </section>
+
+    <!-- 🔥 RESULTS SECTION -->
+    <section id="results" class="max-w-4xl mx-auto hidden">
+        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-emerald-200/50 p-8 mb-8">
+            <!-- STATUS HEADER -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl">
+                <div>
+                    <h3 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-emerald-600 bg-clip-text text-transparent mb-2">
+                        🦴 <span id="modelName">YOLOv11 Analysis</span>
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-3 text-sm">
+                        <span id="kptCount" class="font-black text-orange-600 bg-orange-100 px-4 py-2 rounded-full">0/24</span>
+                        <span id="viewStatus" class="px-4 py-2 rounded-full font-semibold text-sm">Detecting...</span>
+                        <span id="modelStatus" class="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs">Loading</span>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+                    <button id="newAnalysis" class="px-6 py-2 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-all">
+                        <i class="fas fa-plus mr-2"></i>New Analysis
+                    </button>
+                    <button id="saveBtn" class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 transition-all">
+                        <i class="fas fa-save mr-2"></i>Save
+                    </button>
+                </div>
+            </div>
+
+            <!-- DOG IMAGE WITH TINY KEYPOINTS -->
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <div class="space-y-4">
+                    <div class="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+                        <img id="resultImage" src="" alt="Original dog photo" class="w-full h-full object-contain">
+                    </div>
+                    <div id="imageInfo" class="text-center p-4 bg-slate-50 rounded-xl text-sm text-slate-600 hidden">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>High quality image detected</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- KEYPOINT IMAGE -->
+                    <div class="aspect-video bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl overflow-hidden shadow-xl border-4 border-white relative">
+                        <img id="keypointsImage" src="" alt="Keypoints analysis" class="w-full h-full object-contain">
+                        <div id="keypointLegend" class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg text-xs space-y-1 hidden">
+                            <div class="flex items-center"><div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>Visible keypoints</div>
+                            <div class="flex items-center"><div class="w-3 h-3 bg-green-300 rounded-full mr-2"></div>High confidence</div>
+                        </div>
+                    </div>
+
+                    <!-- QUICK STATS -->
+                    <div class="grid grid-cols-2 gap-4 p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl border border-emerald-200/30">
+                        <div class="text-center p-4">
+                            <div class="text-3xl font-bold text-emerald-600" id="hipScore">0.00</div>
+                            <div class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Hip Score</div>
+                            <div class="text-xs text-emerald-600 mt-1" id="hipStatus">Analyzing...</div>
+                        </div>
+                        <div class="text-center p-4">
+                            <div class="text-3xl font-bold text-blue-600" id="elbowScore">0.00</div>
+                            <div class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Elbow Score</div>
+                            <div class="text-xs text-blue-600 mt-1" id="elbowStatus">Analyzing...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OVERALL STATUS -->
+            <div id="overallStatus" class="text-center p-8 rounded-2xl border-4">
+                <div id="statusIcon" class="text-6xl mb-4">🔍</div>
+                <div id="statusText" class="text-2xl font-bold text-slate-800 mb-2">Processing...</div>
+                <div id="statusDetail" class="text-lg text-slate-600 max-w-2xl mx-auto">Please wait while we analyze your dog's posture</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🔥 TRAINING STATUS -->
+    <section id="trainingSection" class="max-w-2xl mx-auto text-center hidden">
+        <div class="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-200/50 rounded-3xl p-8 backdrop-blur-sm">
+            <i class="fas fa-brain text-5xl text-purple-500 mb-4"></i>
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">AI Model Training</h3>
+            <div id="trainingStatus" class="text-lg text-slate-600 mb-6">Checking status...</div>
+            <button id="checkTraining" class="px-8 py-3 bg-purple-500 text-white font-bold rounded-2xl hover:bg-purple-600 transition-all shadow-lg">
+                Check Status
+            </button>
+        </div>
+    </section>
+</div>
+
+<!-- 🔥 FULL JAVASCRIPT -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 🔥 ELEMENTS
+    const imageInput = document.getElementById('imageInput');
+    const uploadZone = document.getElementById('uploadZone');
+    const uploadDefault = document.getElementById('uploadDefault');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const previewImg = document.getElementById('previewImg');
+    const fileName = document.getElementById('fileName');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const analyzeText = document.getElementById('analyzeText');
+    const trainBtn = document.getElementById('trainBtn');
+    const resultsSection = document.getElementById('results');
+    const trainingSection = document.getElementById('trainingSection');
+    let isAnalyzing = false;
+    let currentImagePath = '';
+
+    // 🔥 1. IMAGE UPLOAD + PREVIEW
+    function handleImageUpload(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            fileName.textContent = file.name;
+            uploadPreview.classList.remove('hidden');
+            uploadDefault.classList.add('hidden');
+            analyzeBtn.disabled = false;
+            analyzeText.textContent = '🐕 Analyze Posture';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        handleImageUpload(file);
+    });
+
+    // 🔥 2. CHANGE IMAGE
+    document.getElementById('changeImage').addEventListener('click', function() {
+        imageInput.click();
+    });
+
+    // 🔥 3. DRAG & DROP
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        uploadZone.classList.add('drag-active', 'shadow-3xl');
+    }
+
+    function unhighlight(e) {
+        uploadZone.classList.remove('drag-active', 'shadow-3xl');
+    }
+
+    uploadZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            imageInput.files = files;
+            handleImageUpload(files[0]);
+        }
+    }
+
+    // 🔥 4. ANALYZE BUTTON
+    analyzeBtn.addEventListener('click', async function() {
+        if (isAnalyzing || !imageInput.files[0]) return;
+
+        isAnalyzing = true;
+        analyzeBtn.disabled = true;
+        analyzeText.innerHTML = '🔄 Analyzing...';
+        resultsSection.classList.remove('hidden');
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+        try {
+            const formData = new FormData();
+            formData.append('image', imageInput.files[0]);
+
+            console.log('🚀 Sending to /api/analyze...');
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            console.log('🔍 RAW RESPONSE:', data);
+
+            if (data.success) {
+                displayResults(data);
+            } else {
+                showError('❌ Analysis failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('❌ Error:', error);
+            showError('Network error! Check console (F12) and backend.');
+        } finally {
+            isAnalyzing = false;
+            analyzeBtn.disabled = false;
+            analyzeText.innerHTML = '✅ Re-Analyze';
+        }
+    });
+
+    // 🔥 5. DISPLAY RESULTS
+    function displayResults(data) {
+        console.log('🎯 DEBUG - FULL DATA RECEIVED:', data);
+
+        // 1. ORIGINAL IMAGE
+        const resultImg = document.getElementById('resultImage');
+        resultImg.src = data.image_path;
+        resultImg.onerror = () => console.log('❌ Original image failed:', data.image_path);
+
+        // 2. KEYPOINTS IMAGE (base64)
+        const keypointsImg = document.getElementById('keypointsImage');
+        keypointsImg.style.opacity = '0.5';
+        keypointsImg.src = data.image_path;
+
+        setTimeout(() => {
+            keypointsImg.src = data.keypoints_image;
+            keypointsImg.onload = () => {
+                console.log('✅ KEYPOINTS LOADED SUCCESSFULLY');
+                keypointsImg.style.opacity = '1';
+            };
+            keypointsImg.onerror = () => {
+                console.error('❌ KEYPOINTS FAILED, using original');
+                keypointsImg.src = data.image_path;
+                keypointsImg.style.filter = 'sepia(0.2)';
+                const legend = document.getElementById('keypointLegend');
+                legend.innerHTML = `
+                    <div class="flex items-center text-orange-600 font-bold">
+                        <div class="w-3 h-3 bg-orange-400 rounded-full mr-2"></div>
+                        Keypoints render failed - Original shown
+                    </div>
+                    <div class="text-xs text-slate-600">${data.keypoints_detected}/24 keypoints detected</div>
+                `;
+                legend.classList.remove('hidden');
+            };
+        }, 300);
+
+        currentImagePath = data.image_path;
+
+        // Keypoint count
+        document.getElementById('kptCount').textContent = `${data.keypoints_detected}/24`;
+
+        // View status (safe default)
+        const viewStatusEl = document.getElementById('viewStatus');
+        const vt = data.view_type || 'unknown';
+        if (vt === 'front') {
+            viewStatusEl.innerHTML = '🟢 Front View - Excellent';
+            viewStatusEl.className = 'px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm';
+        } else if (vt === 'side') {
+            viewStatusEl.innerHTML = '🟡 Side View - Good';
+            viewStatusEl.className = 'px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full font-semibold text-sm';
+        } else {
+            viewStatusEl.innerHTML = '🔍 View Angle: Unknown';
+            viewStatusEl.className = 'px-4 py-2 bg-slate-100 text-slate-700 rounded-full font-semibold text-sm';
+        }
+
+        // Model status
+        document.getElementById('modelName').textContent = data.model;
+        document.getElementById('modelStatus').textContent = data.model;
+
+        // Scores
+        document.getElementById('hipScore').textContent = data.hip_score.toFixed(3);
+        document.getElementById('elbowScore').textContent = data.elbow_score.toFixed(3);
+
+        // Hip/elbow qualitative labels
+        const hipStatusEl = document.getElementById('hipStatus');
+        const elbowStatusEl = document.getElementById('elbowStatus');
+
+        if (data.hip_score > 0.85) {
+            hipStatusEl.textContent = 'Excellent';
+            hipStatusEl.className = 'text-xs text-emerald-600 font-semibold mt-1';
+        } else if (data.hip_score > 0.70) {
+            hipStatusEl.textContent = 'Good';
+            hipStatusEl.className = 'text-xs text-emerald-500 font-semibold mt-1';
+        } else {
+            hipStatusEl.textContent = 'Monitor';
+            hipStatusEl.className = 'text-xs text-orange-600 font-semibold mt-1';
+        }
+
+        if (data.elbow_score > 0.85) {
+            elbowStatusEl.textContent = 'Excellent';
+            elbowStatusEl.className = 'text-xs text-blue-600 font-semibold mt-1';
+        } else if (data.elbow_score > 0.70) {
+            elbowStatusEl.textContent = 'Good';
+            elbowStatusEl.className = 'text-xs text-blue-500 font-semibold mt-1';
+        } else {
+            elbowStatusEl.textContent = 'Monitor';
+            elbowStatusEl.className = 'text-xs text-orange-600 font-semibold mt-1';
+        }
+
+        // Overall status (uses backend "status")
+        updateOverallStatus(data);
+
+        // Legend & info
+        document.getElementById('keypointLegend').classList.remove('hidden');
+        document.getElementById('imageInfo').classList.remove('hidden');
+    }
+
+    function updateOverallStatus(data) {
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const statusDetail = document.getElementById('statusDetail');
+
+        const statusLabel = data.status === 'healthy' ? 'Healthy' : 'Monitor';
+
+        if (data.hip_score > 0.75 && data.elbow_score > 0.75) {
+            statusIcon.textContent = '✅';
+            statusIcon.className = 'text-6xl mb-4 text-emerald-500';
+            statusText.textContent = 'Healthy Posture Detected';
+            statusDetail.innerHTML =
+                `${statusLabel} joints. Hip: ${data.hip_score.toFixed(3)} | ` +
+                `Elbow: ${data.elbow_score.toFixed(3)}.`;
+            document.getElementById('overallStatus').className =
+                'text-center p-8 rounded-2xl border-4 border-emerald-200/50 bg-emerald-50/50';
+        } else {
+            statusIcon.textContent = '⚠️';
+            statusIcon.className = 'text-6xl mb-4 text-orange-500';
+            statusText.textContent = 'Monitor Required';
+            statusDetail.innerHTML =
+                `${statusLabel} posture. Retake with better lighting/angle recommended.`;
+            document.getElementById('overallStatus').className =
+                'text-center p-8 rounded-2xl border-4 border-orange-200/50 bg-orange-50/50';
+        }
+    }
+
+    function showError(message) {
+        document.getElementById('statusIcon').textContent = '❌';
+        document.getElementById('statusIcon').className = 'text-6xl mb-4 text-red-500';
+        document.getElementById('statusText').textContent = 'Analysis Failed';
+        document.getElementById('statusDetail').textContent = message;
+        document.getElementById('overallStatus').className =
+            'text-center p-8 rounded-2xl border-4 border-red-200/50 bg-red-50/50';
+    }
+
+    // 🔥 6. NEW ANALYSIS
+    document.getElementById('newAnalysis').addEventListener('click', function() {
+        resultsSection.classList.add('hidden');
+        uploadPreview.classList.add('hidden');
+        uploadDefault.classList.remove('hidden');
+        imageInput.value = '';
+        analyzeBtn.disabled = true;
+        analyzeText.textContent = 'Analyze Posture';
+        isAnalyzing = false;
+        uploadZone.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // 🔥 7. TRAIN BUTTON
+    trainBtn.addEventListener('click', async function() {
+        try {
+            const response = await fetch('/api/train-dog-model', { method: 'POST' });
+            const data = await response.json();
+            alert(data.message || 'Training started!');
+            trainingSection.classList.remove('hidden');
+            checkTrainingStatus();
+        } catch (error) {
+            alert('Training endpoint not ready. Using anatomical fallback.');
+        }
+    });
+
+    // 🔥 8. TRAINING STATUS
+    async function checkTrainingStatus() {
+        try {
+            const response = await fetch('/api/training-status');
+            const data = await response.json();
+            document.getElementById('trainingStatus').textContent = 
+                data.training_complete ? '✅ Model trained successfully!' :
+                data.training_active ? '⏳ Training in progress... (30-90min)' :
+                '❓ Ready to train';
+        } catch (e) {
+            console.log('Training status unavailable');
+        }
+    }
+
+    document.getElementById('checkTraining').addEventListener('click', checkTrainingStatus);
+
+    // 🔥 9. SAVE BUTTON (placeholder)
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        if (!currentImagePath) return alert('No analysis to save!');
+        alert('💾 Save functionality requires login. Check /api/profile after login!');
+    });
+
+    // Auto-check training status every 30s
+    setInterval(checkTrainingStatus, 30000);
+});
+</script>
+
+</body>
+</html>

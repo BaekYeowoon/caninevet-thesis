@@ -1,0 +1,44 @@
+# Ultralytics YOLO11 🚀 Dog Posture Dataset - THESIS READY
+# Stanford Dogs: http://vision.stanford.edu/aditya86/ImageNetDogs/
+# Docs: https://docs.ultralytics.com/datasets/pose/dog-pose/
+
+# Dataset root (relative to canine-mvp/)
+path: datasets/dog-pose  # ✅ FIXED: Full path from project root
+
+# Train/val splits
+train: images/train  # 6773 images
+val: images/val      # 1703 images
+
+# Classes
+nc: 1
+names: 
+  0: dog
+
+# 24 Dog keypoints (veterinary standard)
+kpt_shape: [24, 3]  # x,y,visibility
+kpt_names:
+  0:
+    - front_left_paw      # 0
+    - front_left_knee     # 1  
+    - front_left_elbow    # 2
+    - rear_left_paw       # 3
+    - rear_left_knee      # 4
+    - rear_left_elbow     # 5
+    - front_right_paw     # 6
+    - front_right_knee    # 7
+    - front_right_elbow   # 8
+    - rear_right_paw      # 9
+    - rear_right_knee     # 10
+    - rear_right_elbow    # 11
+    - tail_start          # 12
+    - tail_end            # 13
+    - left_ear_base       # 14
+    - right_ear_base      # 15
+    - nose                # 16
+    - chin                # 17
+    - left_ear_tip        # 18
+    - right_ear_tip       # 19
+    - left_eye            # 20
+    - right_eye           # 21
+    - withers             # 22
+    - throat              # 23

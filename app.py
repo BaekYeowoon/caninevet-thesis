@@ -331,21 +331,26 @@ def register():
 @app.route('/api/profile')
 def profile():
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401  
+    
     user = User.query.get(session['user_id'])
     assessments = Assessment.query.filter_by(user_id=user.id).order_by(
         Assessment.created_at.desc()
     ).limit(10).all()
+    
     return jsonify({
+        'success': True,  
         'user': {'email': user.email},
         'assessments': [{
             'id': a.id,
             'hip_score': a.hip_score,
             'elbow_score': a.elbow_score,
             'status': a.overall_status,
-            'created_at': a.created_at.isoformat()
+            'created_at': a.created_at.isoformat(),
+            'image_path': a.image_path  
         } for a in assessments]
     })
+
 
 
 @app.route('/api/save-assessment', methods=['POST'])

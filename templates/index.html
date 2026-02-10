@@ -251,22 +251,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function checkLoginStatus() {
-        try {
-            const response = await fetch('/api/profile');
-            if (response.ok) {
-                const data = await response.json();
-                isLoggedIn = true;
-                currentUser = data.user;
-                updateAuthUI();
-            } else {
-                isLoggedIn = false;
-                updateAuthUI();
-            }
-        } catch (e) {
+    try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+            const data = await response.json();
+            isLoggedIn = true;
+            currentUser = data.user;  // ✅ Works
+            updateAuthUI();
+        } else {
             isLoggedIn = false;
             updateAuthUI();
         }
+    } catch (e) {
+        isLoggedIn = false;
+        updateAuthUI();
     }
+}
 
     function attachAuthListeners() {
         // Login button
@@ -289,22 +289,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function openModal(mode) {
-        authModal.classList.remove('hidden');
-        document.body.classList.add('modal-open');
-        
-        if (mode === 'login') {
-            modalTitle.textContent = 'Sign In to CanineVet';
-            authButtonText.textContent = 'Sign In';
-            authToggleText.innerHTML = "Don't have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign up</button>";
-        } else {
-            modalTitle.textContent = 'Create Account';
-            authButtonText.textContent = 'Sign Up';
-            authToggleText.innerHTML = "Already have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign in</button>";
-        }
-        
-        authToggle.onclick = () => openModal(mode === 'login' ? 'register' : 'login');
-        closeModalListeners();
+    authModal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+
+    if (mode === 'login') {
+        modalTitle.textContent = 'Sign In to CanineVet';
+        authButtonText.textContent = 'Sign In';
+        authToggleText.innerHTML =
+            "Don't have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign up</button>";
+    } else {
+        modalTitle.textContent = 'Create Account';
+        authButtonText.textContent = 'Sign Up';
+        authToggleText.innerHTML =
+            "Already have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign in</button>";
     }
+
+    // 🔥 IMPORTANT FIX: re-bind AFTER innerHTML update
+    const newAuthToggle = document.getElementById('authToggle');
+    if (newAuthToggle) {
+        newAuthToggle.onclick = () =>
+            openModal(mode === 'login' ? 'register' : 'login');
+    }
+
+    closeModalListeners();
+}
 
     function closeModalListeners() {
         document.getElementById('closeModal').onclick = closeModal;
@@ -362,64 +370,76 @@ document.addEventListener('DOMContentLoaded', function() {
         updateAuthUI();
     }
 
-    async function showProfile() {
-        try {
-            const response = await fetch('/api/profile');
-            const data = await response.json();
-            
-            if (data.error) {
-                alert('Session expired. Please sign in again.');
-                logout();
-                return;
-            }
-
-            let assessmentsHtml = data.assessments.length ? 
-                data.assessments.map(a => 
-                    `<div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl mb-3 border-l-4 border-emerald-400">
-                        <div class="font-bold text-slate-800">${new Date(a.created_at).toLocaleDateString()}</div>
-                        <div class="text-2xl font-black text-emerald-600 mt-1">Hip: ${a.hip_score.toFixed(2)}</div>
-                        <div class="text-lg text-blue-600">Elbow: ${a.elbow_score.toFixed(2)}</div>
-                        <div class="text-sm text-slate-600 mt-1">${a.status}</div>
-                    </div>`
-                ).join('') : 
-                '<p class="text-slate-500 text-center py-8">No assessments saved yet. Analyze your first dog!</p>';
-
-            const profileHtml = `
-                <div class="max-w-2xl mx-auto p-8">
-                    <div class="text-center mb-8">
-                        <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                            <i class="fas fa-user text-3xl text-white"></i>
-                        </div>
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-emerald-600 bg-clip-text text-transparent mb-2">${data.user.email}</h2>
-                        <p class="text-slate-600">${data.assessments.length} assessments saved</p>
-                    </div>
-                    <h3 class="text-2xl font-bold text-slate-800 mb-6">Your Analyses</h3>
-                    ${assessmentsHtml}
-                    <div class="text-center mt-8">
-                        <button onclick="document.getElementById('profileModal').classList.add('hidden')" 
-                                class="px-8 py-3 bg-slate-500 text-white font-bold rounded-2xl hover:bg-slate-600 transition-all">
-                            Done
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // Create profile modal
-            let profileModal = document.getElementById('profileModal');
-            if (!profileModal) {
-                profileModal = document.createElement('div');
-                profileModal.id = 'profileModal';
-                profileModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4';
-                profileModal.innerHTML = '<div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/50"></div>';
-                document.body.appendChild(profileModal);
-            }
-            profileModal.querySelector('div').innerHTML = profileHtml;
-            profileModal.classList.remove('hidden');
-            document.body.classList.add('modal-open');
-        } catch (e) {
-            alert('Error loading profile');
+   async function showProfile() {
+    try {
+        const response = await fetch('/api/profile');
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Session expired. Please sign in again.');
+            logout();
+            return;
         }
+
+        let assessmentsHtml = data.assessments.length ? 
+            data.assessments.map(a => `
+                <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl mb-4 border-l-4 border-emerald-400 shadow-lg hover:shadow-xl transition-all">
+                    <div class="aspect-video bg-slate-100 rounded-xl overflow-hidden mb-4 shadow-md">
+                        <img src="${a.image_path}" alt="Dog analysis ${new Date(a.created_at).toLocaleDateString()}" 
+                             class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="font-bold text-slate-800 text-lg">${new Date(a.created_at).toLocaleDateString()}</div>
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">${a.status}</span>
+                    </div>
+                    <div class="text-3xl font-black text-emerald-600 mb-2">Hip: ${a.hip_score.toFixed(2)}</div>
+                    <div class="text-2xl font-bold text-blue-600 mb-3">Elbow: ${a.elbow_score.toFixed(2)}</div>
+                </div>
+            `).join('') : 
+            '<div class="text-center py-12"><i class="fas fa-dog text-6xl text-emerald-300 mb-4"></i><p class="text-slate-500 text-lg">No assessments saved yet</p></div>';
+
+        const profileHtml = `
+            <div class="max-w-4xl mx-auto p-8">
+                <div class="text-center mb-12">
+                    <div class="w-28 h-28 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-6 flex items-center justify-center shadow-2xl">
+                        <i class="fas fa-user text-4xl text-white"></i>
+                    </div>
+                    <h2 class="text-4xl font-bold text-slate-900 mb-2">${data.user.email}</h2>
+                    <p class="text-2xl font-bold text-emerald-600">${data.assessments.length} assessments saved</p>
+                </div>
+                <h3 class="text-3xl font-bold text-slate-800 mb-8 text-center">Your Dog Analyses</h3>
+                ${assessmentsHtml}
+                <div class="text-center mt-12">
+                    <button id="closeProfile" class="px-12 py-4 bg-slate-500 text-white font-bold rounded-2xl hover:bg-slate-600 shadow-xl hover:shadow-2xl transition-all text-xl">
+                        <i class="fas fa-times mr-2"></i>Done
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        let profileModal = document.getElementById('profileModal');
+        if (!profileModal) {
+            profileModal = document.createElement('div');
+            profileModal.id = 'profileModal';
+            profileModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4';
+            profileModal.innerHTML = '<div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/50 p-8"></div>';
+            document.body.appendChild(profileModal);
+        }
+        profileModal.querySelector('div').innerHTML = profileHtml;
+        profileModal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+        
+        // Close button
+        document.getElementById('closeProfile').onclick = () => {
+            profileModal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        };
+        
+    } catch (e) {
+        alert('Error loading profile');
     }
+}
+
 
     // 🔥 AUTH FORM SUBMIT
     authForm.addEventListener('submit', handleAuth);
@@ -554,7 +574,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 🔥 [Rest of existing functions unchanged: displayResults, updateOverallStatus, showError, newAnalysis, etc.]
     function displayResults(data) {
         console.log('🎯 DEBUG - FULL DATA RECEIVED:', data);
         const resultImg = document.getElementById('resultImage');

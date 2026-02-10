@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐕 CanineVet - AI Dog Posture Analysis</title>
+    <title>🐕 CanineVet - Dog Posture Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,13 +15,34 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         .drag-active { border-color: #10b981 !important; background-color: #d1fae5 !important; }
+        .modal-open { overflow: hidden; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 min-h-screen">
 
+<!-- 🔥 NAVBAR -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/50 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-paw text-white text-xl"></i>
+            </div>
+            <span class="font-bold text-xl bg-gradient-to-r from-slate-800 to-emerald-600 bg-clip-text text-transparent">CanineVet</span>
+        </div>
+        
+        <div class="flex items-center space-x-2" id="authNav">
+            <!-- Dynamic auth buttons will be inserted here -->
+        </div>
+    </div>
+</nav>
+
+<!-- Padding for fixed navbar -->
+<div class="pt-20"></div>
+
 <div id="mainPage" class="max-w-6xl mx-auto px-6 py-16 page-content animate-fade-in">
     <!-- 🔥 HERO SECTION -->
     <section class="text-center mb-20">
+        <!-- [Existing hero content unchanged - upload zone, analyze button] -->
         <div class="inline-block animate-float mb-8">
             <div class="w-28 h-28 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-3xl backdrop-blur-sm border border-emerald-200/50 mx-auto mb-6 flex items-center justify-center">
                 <svg class="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,12 +57,10 @@
             Upload your dog's photo and get instant hip, elbow, and joint health analysis powered by <strong>YOLOv11 pose estimation</strong>.
         </p>
         
-        <!-- 🔥 UPLOAD ZONE -->
+        <!-- 🔥 UPLOAD ZONE (unchanged) -->
         <div class="max-w-2xl mx-auto">
-            <!-- IMAGE PREVIEW ZONE -->
             <div id="uploadZone" class="group relative border-4 border-dashed border-emerald-300/50 bg-gradient-to-br from-emerald-50/80 to-teal-50/80 rounded-3xl p-12 hover:border-emerald-400 hover:bg-emerald-50/90 transition-all duration-500 backdrop-blur-sm shadow-2xl hover:shadow-3xl cursor-pointer mb-8">
                 <input id="imageInput" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                
                 <div id="uploadPreview" class="hidden absolute inset-0 w-full h-full rounded-3xl overflow-hidden z-10">
                     <img id="previewImg" class="w-full h-full object-contain" alt="Preview">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-3xl"></div>
@@ -52,8 +71,6 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- DEFAULT UPLOAD STATE -->
                 <div id="uploadDefault" class="flex flex-col items-center text-center">
                     <svg class="w-24 h-24 text-emerald-500/80 group-hover:scale-110 transition-transform duration-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -69,23 +86,15 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 🔥 ANALYZE BUTTON -->
             <button id="analyzeBtn" class="w-full sm:w-auto px-12 py-6 bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xl rounded-3xl shadow-2xl hover:shadow-3xl hover:-translate-y-2 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-lg transform mx-auto block mb-4" disabled>
                 🐕 <span id="analyzeText">Analyze Posture</span>
-            </button>
-
-            <!-- 🔥 TRAIN BUTTON -->
-            <button id="trainBtn" class="px-12 py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 animate-pulse-slow">
-                🚀 Train Model (30min)
             </button>
         </div>
     </section>
 
-    <!-- 🔥 RESULTS SECTION -->
+    <!-- 🔥 RESULTS SECTION (unchanged except save button behavior) -->
     <section id="results" class="max-w-4xl mx-auto hidden">
         <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-emerald-200/50 p-8 mb-8">
-            <!-- STATUS HEADER -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl">
                 <div>
                     <h3 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-emerald-600 bg-clip-text text-transparent mb-2">
@@ -106,8 +115,7 @@
                     </button>
                 </div>
             </div>
-
-            <!-- DOG IMAGE WITH TINY KEYPOINTS -->
+            <!-- [Rest of results section unchanged] -->
             <div class="grid md:grid-cols-2 gap-8 mb-8">
                 <div class="space-y-4">
                     <div class="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
@@ -118,9 +126,7 @@
                         <span>High quality image detected</span>
                     </div>
                 </div>
-                
                 <div class="space-y-6">
-                    <!-- KEYPOINT IMAGE -->
                     <div class="aspect-video bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl overflow-hidden shadow-xl border-4 border-white relative">
                         <img id="keypointsImage" src="" alt="Keypoints analysis" class="w-full h-full object-contain">
                         <div id="keypointLegend" class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg text-xs space-y-1 hidden">
@@ -128,8 +134,6 @@
                             <div class="flex items-center"><div class="w-3 h-3 bg-green-300 rounded-full mr-2"></div>High confidence</div>
                         </div>
                     </div>
-
-                    <!-- QUICK STATS -->
                     <div class="grid grid-cols-2 gap-4 p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl border border-emerald-200/30">
                         <div class="text-center p-4">
                             <div class="text-3xl font-bold text-emerald-600" id="hipScore">0.00</div>
@@ -144,8 +148,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- OVERALL STATUS -->
             <div id="overallStatus" class="text-center p-8 rounded-2xl border-4">
                 <div id="statusIcon" class="text-6xl mb-4">🔍</div>
                 <div id="statusText" class="text-2xl font-bold text-slate-800 mb-2">Processing...</div>
@@ -153,23 +155,54 @@
             </div>
         </div>
     </section>
+</div>
 
-    <!-- 🔥 TRAINING STATUS -->
-    <section id="trainingSection" class="max-w-2xl mx-auto text-center hidden">
-        <div class="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-200/50 rounded-3xl p-8 backdrop-blur-sm">
-            <i class="fas fa-brain text-5xl text-purple-500 mb-4"></i>
-            <h3 class="text-2xl font-bold text-slate-800 mb-4">AI Model Training</h3>
-            <div id="trainingStatus" class="text-lg text-slate-600 mb-6">Checking status...</div>
-            <button id="checkTraining" class="px-8 py-3 bg-purple-500 text-white font-bold rounded-2xl hover:bg-purple-600 transition-all shadow-lg">
-                Check Status
+<!-- 🔥 LOGIN MODAL -->
+<div id="authModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4">
+    <div class="bg-white/95 backdrop-blur-xl rounded-3xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/50">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="modalTitle" class="text-2xl font-bold bg-gradient-to-r from-slate-900 to-emerald-600 bg-clip-text text-transparent">Sign In</h2>
+            <button id="closeModal" class="text-slate-400 hover:text-slate-600 text-2xl">
+                <i class="fas fa-times"></i>
             </button>
         </div>
-    </section>
+        
+        <form id="authForm">
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                    <input type="email" id="emailInput" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-slate-50/50" placeholder="doglover@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                    <input type="password" id="passwordInput" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-slate-50/50" placeholder="••••••••">
+                </div>
+            </div>
+            <button type="submit" id="authSubmit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-4 px-6 rounded-2xl hover:from-emerald-600 hover:to-teal-700 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                <span id="authButtonText">Sign In</span>
+            </button>
+        </form>
+        
+        <div class="text-center mt-6 pt-6 border-t border-slate-200">
+            <p id="authToggleText" class="text-sm text-slate-600">
+                Don't have an account? <button id="authToggle" type="button" class="font-semibold text-emerald-600 hover:text-emerald-700">Sign up</button>
+            </p>
+        </div>
+        
+        <div id="authError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"></div>
+    </div>
 </div>
 
 <!-- 🔥 FULL JAVASCRIPT -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 🔥 STATE
+    let isLoggedIn = false;
+    let currentUser = null;
+    let currentAnalysisData = null;
+    let isAnalyzing = false;
+    let currentImagePath = '';
+
     // 🔥 ELEMENTS
     const imageInput = document.getElementById('imageInput');
     const uploadZone = document.getElementById('uploadZone');
@@ -179,13 +212,219 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileName = document.getElementById('fileName');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const analyzeText = document.getElementById('analyzeText');
-    const trainBtn = document.getElementById('trainBtn');
+    const authNav = document.getElementById('authNav');
+    const authModal = document.getElementById('authModal');
+    const authForm = document.getElementById('authForm');
+    const authToggle = document.getElementById('authToggle');
+    const authToggleText = document.getElementById('authToggleText');
+    const modalTitle = document.getElementById('modalTitle');
+    const authSubmit = document.getElementById('authSubmit');
+    const authButtonText = document.getElementById('authButtonText');
+    const authError = document.getElementById('authError');
     const resultsSection = document.getElementById('results');
-    const trainingSection = document.getElementById('trainingSection');
-    let isAnalyzing = false;
-    let currentImagePath = '';
 
-    // 🔥 1. IMAGE UPLOAD + PREVIEW
+    // 🔥 CHECK LOGIN STATUS ON LOAD
+    checkLoginStatus();
+
+    // 🔥 AUTH FUNCTIONS
+    function updateAuthUI() {
+        if (isLoggedIn) {
+            authNav.innerHTML = `
+                <span class="text-sm text-slate-700 mr-4">👋 ${currentUser.email}</span>
+                <button id="profileBtn" class="px-4 py-2 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-all flex items-center">
+                    <i class="fas fa-user mr-1"></i>Profile
+                </button>
+                <button id="logoutBtn" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-300 transition-all flex items-center">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                </button>
+            `;
+            document.getElementById('saveBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            authNav.innerHTML = `
+                <button id="loginBtn" class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                </button>
+            `;
+            document.getElementById('saveBtn').classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        attachAuthListeners();
+    }
+
+    async function checkLoginStatus() {
+        try {
+            const response = await fetch('/api/profile');
+            if (response.ok) {
+                const data = await response.json();
+                isLoggedIn = true;
+                currentUser = data.user;
+                updateAuthUI();
+            } else {
+                isLoggedIn = false;
+                updateAuthUI();
+            }
+        } catch (e) {
+            isLoggedIn = false;
+            updateAuthUI();
+        }
+    }
+
+    function attachAuthListeners() {
+        // Login button
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => openModal('login'));
+        }
+
+        // Profile button
+        const profileBtn = document.getElementById('profileBtn');
+        if (profileBtn) {
+            profileBtn.addEventListener('click', showProfile);
+        }
+
+        // Logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', logout);
+        }
+    }
+
+    function openModal(mode) {
+        authModal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+        
+        if (mode === 'login') {
+            modalTitle.textContent = 'Sign In to CanineVet';
+            authButtonText.textContent = 'Sign In';
+            authToggleText.innerHTML = "Don't have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign up</button>";
+        } else {
+            modalTitle.textContent = 'Create Account';
+            authButtonText.textContent = 'Sign Up';
+            authToggleText.innerHTML = "Already have an account? <button id='authToggle' type='button' class='font-semibold text-emerald-600 hover:text-emerald-700'>Sign in</button>";
+        }
+        
+        authToggle.onclick = () => openModal(mode === 'login' ? 'register' : 'login');
+        closeModalListeners();
+    }
+
+    function closeModalListeners() {
+        document.getElementById('closeModal').onclick = closeModal;
+        authModal.onclick = (e) => { if (e.target === authModal) closeModal(); };
+        document.onkeydown = (e) => { if (e.key === 'Escape') closeModal(); };
+    }
+
+    function closeModal() {
+        authModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        authForm.reset();
+        clearAuthError();
+    }
+
+    function showAuthError(message) {
+        authError.textContent = message;
+        authError.classList.remove('hidden');
+    }
+
+    function clearAuthError() {
+        authError.classList.add('hidden');
+    }
+
+    async function handleAuth(e) {
+        e.preventDefault();
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+        const isLogin = authButtonText.textContent === 'Sign In';
+
+        try {
+            const response = await fetch(`/api/${isLogin ? 'login' : 'register'}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                isLoggedIn = true;
+                currentUser = { email };
+                updateAuthUI();
+                closeModal();
+            } else {
+                showAuthError(data.message || 'Authentication failed');
+            }
+        } catch (error) {
+            showAuthError('Network error. Please try again.');
+        }
+    }
+
+    function logout() {
+        isLoggedIn = false;
+        currentUser = null;
+        updateAuthUI();
+    }
+
+    async function showProfile() {
+        try {
+            const response = await fetch('/api/profile');
+            const data = await response.json();
+            
+            if (data.error) {
+                alert('Session expired. Please sign in again.');
+                logout();
+                return;
+            }
+
+            let assessmentsHtml = data.assessments.length ? 
+                data.assessments.map(a => 
+                    `<div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl mb-3 border-l-4 border-emerald-400">
+                        <div class="font-bold text-slate-800">${new Date(a.created_at).toLocaleDateString()}</div>
+                        <div class="text-2xl font-black text-emerald-600 mt-1">Hip: ${a.hip_score.toFixed(2)}</div>
+                        <div class="text-lg text-blue-600">Elbow: ${a.elbow_score.toFixed(2)}</div>
+                        <div class="text-sm text-slate-600 mt-1">${a.status}</div>
+                    </div>`
+                ).join('') : 
+                '<p class="text-slate-500 text-center py-8">No assessments saved yet. Analyze your first dog!</p>';
+
+            const profileHtml = `
+                <div class="max-w-2xl mx-auto p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <i class="fas fa-user text-3xl text-white"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-emerald-600 bg-clip-text text-transparent mb-2">${data.user.email}</h2>
+                        <p class="text-slate-600">${data.assessments.length} assessments saved</p>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-6">Your Analyses</h3>
+                    ${assessmentsHtml}
+                    <div class="text-center mt-8">
+                        <button onclick="document.getElementById('profileModal').classList.add('hidden')" 
+                                class="px-8 py-3 bg-slate-500 text-white font-bold rounded-2xl hover:bg-slate-600 transition-all">
+                            Done
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Create profile modal
+            let profileModal = document.getElementById('profileModal');
+            if (!profileModal) {
+                profileModal = document.createElement('div');
+                profileModal.id = 'profileModal';
+                profileModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4';
+                profileModal.innerHTML = '<div class="bg-white/95 backdrop-blur-xl rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200/50"></div>';
+                document.body.appendChild(profileModal);
+            }
+            profileModal.querySelector('div').innerHTML = profileHtml;
+            profileModal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        } catch (e) {
+            alert('Error loading profile');
+        }
+    }
+
+    // 🔥 AUTH FORM SUBMIT
+    authForm.addEventListener('submit', handleAuth);
+
+    // 🔥 IMAGE UPLOAD (unchanged)
     function handleImageUpload(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -205,12 +444,11 @@ document.addEventListener('DOMContentLoaded', function() {
         handleImageUpload(file);
     });
 
-    // 🔥 2. CHANGE IMAGE
     document.getElementById('changeImage').addEventListener('click', function() {
         imageInput.click();
     });
 
-    // 🔥 3. DRAG & DROP
+    // 🔥 DRAG & DROP (unchanged)
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         uploadZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -247,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🔥 4. ANALYZE BUTTON
+    // 🔥 ANALYZE BUTTON (now stores data for save)
     analyzeBtn.addEventListener('click', async function() {
         if (isAnalyzing || !imageInput.files[0]) return;
 
@@ -273,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 RAW RESPONSE:', data);
 
             if (data.success) {
+                currentAnalysisData = data; // Store for save
                 displayResults(data);
             } else {
                 showError('❌ Analysis failed: ' + (data.error || 'Unknown error'));
@@ -287,16 +526,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 🔥 5. DISPLAY RESULTS
+    // 🔥 SAVE BUTTON - NOW FULLY FUNCTIONAL
+    document.getElementById('saveBtn').addEventListener('click', async function() {
+        if (!currentAnalysisData) return alert('No analysis to save!');
+        if (!isLoggedIn) return openModal('login');
+
+        try {
+            const response = await fetch('/api/save-assessment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_path: currentAnalysisData.image_path,
+                    hip_score: currentAnalysisData.hip_score,
+                    elbow_score: currentAnalysisData.elbow_score,
+                    status: currentAnalysisData.status
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('✅ Analysis saved to your profile!');
+            } else {
+                alert('Save failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Save failed. Please try again.');
+        }
+    });
+
+    // 🔥 [Rest of existing functions unchanged: displayResults, updateOverallStatus, showError, newAnalysis, etc.]
     function displayResults(data) {
         console.log('🎯 DEBUG - FULL DATA RECEIVED:', data);
-
-        // 1. ORIGINAL IMAGE
         const resultImg = document.getElementById('resultImage');
         resultImg.src = data.image_path;
         resultImg.onerror = () => console.log('❌ Original image failed:', data.image_path);
 
-        // 2. KEYPOINTS IMAGE (base64)
         const keypointsImg = document.getElementById('keypointsImage');
         keypointsImg.style.opacity = '0.5';
         keypointsImg.src = data.image_path;
@@ -314,8 +578,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const legend = document.getElementById('keypointLegend');
                 legend.innerHTML = `
                     <div class="flex items-center text-orange-600 font-bold">
-                        <div class="w-3 h-3 bg-orange-400 rounded-full mr-2"></div>
-                        Keypoints render failed - Original shown
+                    <div class="w-3 h-3 bg-orange-400 rounded-full mr-2"></div>
+                    Keypoints render failed - Original shown
                     </div>
                     <div class="text-xs text-slate-600">${data.keypoints_detected}/24 keypoints detected</div>
                 `;
@@ -324,11 +588,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
 
         currentImagePath = data.image_path;
-
-        // Keypoint count
         document.getElementById('kptCount').textContent = `${data.keypoints_detected}/24`;
 
-        // View status (safe default)
         const viewStatusEl = document.getElementById('viewStatus');
         const vt = data.view_type || 'unknown';
         if (vt === 'front') {
@@ -342,15 +603,12 @@ document.addEventListener('DOMContentLoaded', function() {
             viewStatusEl.className = 'px-4 py-2 bg-slate-100 text-slate-700 rounded-full font-semibold text-sm';
         }
 
-        // Model status
         document.getElementById('modelName').textContent = data.model;
         document.getElementById('modelStatus').textContent = data.model;
 
-        // Scores
         document.getElementById('hipScore').textContent = data.hip_score.toFixed(3);
         document.getElementById('elbowScore').textContent = data.elbow_score.toFixed(3);
 
-        // Hip/elbow qualitative labels
         const hipStatusEl = document.getElementById('hipStatus');
         const elbowStatusEl = document.getElementById('elbowStatus');
 
@@ -376,10 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
             elbowStatusEl.className = 'text-xs text-orange-600 font-semibold mt-1';
         }
 
-        // Overall status (uses backend "status")
         updateOverallStatus(data);
-
-        // Legend & info
         document.getElementById('keypointLegend').classList.remove('hidden');
         document.getElementById('imageInfo').classList.remove('hidden');
     }
@@ -395,19 +650,14 @@ document.addEventListener('DOMContentLoaded', function() {
             statusIcon.textContent = '✅';
             statusIcon.className = 'text-6xl mb-4 text-emerald-500';
             statusText.textContent = 'Healthy Posture Detected';
-            statusDetail.innerHTML =
-                `${statusLabel} joints. Hip: ${data.hip_score.toFixed(3)} | ` +
-                `Elbow: ${data.elbow_score.toFixed(3)}.`;
-            document.getElementById('overallStatus').className =
-                'text-center p-8 rounded-2xl border-4 border-emerald-200/50 bg-emerald-50/50';
+            statusDetail.innerHTML = `${statusLabel} joints. Hip: ${data.hip_score.toFixed(3)} | Elbow: ${data.elbow_score.toFixed(3)}.`;
+            document.getElementById('overallStatus').className = 'text-center p-8 rounded-2xl border-4 border-emerald-200/50 bg-emerald-50/50';
         } else {
             statusIcon.textContent = '⚠️';
             statusIcon.className = 'text-6xl mb-4 text-orange-500';
             statusText.textContent = 'Monitor Required';
-            statusDetail.innerHTML =
-                `${statusLabel} posture. Retake with better lighting/angle recommended.`;
-            document.getElementById('overallStatus').className =
-                'text-center p-8 rounded-2xl border-4 border-orange-200/50 bg-orange-50/50';
+            statusDetail.innerHTML = `${statusLabel} posture. Retake with better lighting/angle recommended.`;
+            document.getElementById('overallStatus').className = 'text-center p-8 rounded-2xl border-4 border-orange-200/50 bg-orange-50/50';
         }
     }
 
@@ -416,11 +666,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('statusIcon').className = 'text-6xl mb-4 text-red-500';
         document.getElementById('statusText').textContent = 'Analysis Failed';
         document.getElementById('statusDetail').textContent = message;
-        document.getElementById('overallStatus').className =
-            'text-center p-8 rounded-2xl border-4 border-red-200/50 bg-red-50/50';
+        document.getElementById('overallStatus').className = 'text-center p-8 rounded-2xl border-4 border-red-200/50 bg-red-50/50';
     }
 
-    // 🔥 6. NEW ANALYSIS
     document.getElementById('newAnalysis').addEventListener('click', function() {
         resultsSection.classList.add('hidden');
         uploadPreview.classList.add('hidden');
@@ -429,46 +677,9 @@ document.addEventListener('DOMContentLoaded', function() {
         analyzeBtn.disabled = true;
         analyzeText.textContent = 'Analyze Posture';
         isAnalyzing = false;
+        currentAnalysisData = null;
         uploadZone.scrollIntoView({ behavior: 'smooth' });
     });
-
-    // 🔥 7. TRAIN BUTTON
-    trainBtn.addEventListener('click', async function() {
-        try {
-            const response = await fetch('/api/train-dog-model', { method: 'POST' });
-            const data = await response.json();
-            alert(data.message || 'Training started!');
-            trainingSection.classList.remove('hidden');
-            checkTrainingStatus();
-        } catch (error) {
-            alert('Training endpoint not ready. Using anatomical fallback.');
-        }
-    });
-
-    // 🔥 8. TRAINING STATUS
-    async function checkTrainingStatus() {
-        try {
-            const response = await fetch('/api/training-status');
-            const data = await response.json();
-            document.getElementById('trainingStatus').textContent = 
-                data.training_complete ? '✅ Model trained successfully!' :
-                data.training_active ? '⏳ Training in progress... (30-90min)' :
-                '❓ Ready to train';
-        } catch (e) {
-            console.log('Training status unavailable');
-        }
-    }
-
-    document.getElementById('checkTraining').addEventListener('click', checkTrainingStatus);
-
-    // 🔥 9. SAVE BUTTON (placeholder)
-    document.getElementById('saveBtn').addEventListener('click', function() {
-        if (!currentImagePath) return alert('No analysis to save!');
-        alert('💾 Save functionality requires login. Check /api/profile after login!');
-    });
-
-    // Auto-check training status every 30s
-    setInterval(checkTrainingStatus, 30000);
 });
 </script>
 
